@@ -1,66 +1,54 @@
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-public class Professor {
-    String email;
-    String password;
-    List<Course> coursesTaught;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public class Professor extends User {
+    private int professorId;
 
     public Professor(String email, String password) {
-        this.email = email;
-        this.password = password;
-        this.coursesTaught = new ArrayList<>();
+        super(email, password);
+        this.professorId = fetchProfessorId(email); // Fetch professor ID based on email
     }
 
-    public boolean login(String email, String password) {
-        return this.email.equals(email) && this.password.equals(password);
-    }
-
-    public void manageCourses(List<Course> courses) {
-        System.out.println("Courses taught by " + email + ":");
-        for (Course course : courses) {
-            if (course.professor.equals(this.email)) {
-                System.out.println(course);
+    private int fetchProfessorId(String email) {
+        int id = -1;
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            String query = "SELECT professor_id FROM professors WHERE user_id = (SELECT user_id FROM users WHERE email = ?)";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, email);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                id = resultSet.getInt("professor_id");
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        return id;
     }
 
-    public void updateCourseDetails(Course course) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Updating course details for " + course.title);
-        System.out.println("1. Update Schedule");
-        System.out.println("2. Update Credits");
-        int choice = scanner.nextInt();
-        scanner.nextLine();  // Consume newline
-
-        switch (choice) {
-            case 1:
-                System.out.print("Enter new schedule: ");
-                String newSchedule = scanner.nextLine();
-                course.schedule = newSchedule;
-                System.out.println("Schedule updated.");
-                break;
-            case 2:
-                System.out.print("Enter new credits (2 or 4): ");
-                int newCredits = scanner.nextInt();
-                if (newCredits == 2 || newCredits == 4) {
-                    course.credits = newCredits;
-                    System.out.println("Credits updated.");
-                } else {
-                    System.out.println("Invalid credit value.");
-                }
-                break;
-            default:
-                System.out.println("Invalid choice.");
-        }
+    public void viewAssignedCourses() {
+        // Logic to view courses assigned to the professor
     }
 
-    public void viewEnrolledStudents(List<Course> courses) {
-        System.out.println("Enrolled students in your courses:");
-        for (Course course : courses) {
-            if (course.professor.equals(this.email)) {
-                System.out.println(course.title + ": " + course.registeredStudents);
+    public void viewStudentsInCourse(String courseCode) {
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            String query = "SELECT s.student_id, u.email " +
+                    "FROM course_registration cr " +
+                    "JOIN students s ON cr.student_id = s.student_id " +
+                    "JOIN users u ON s.user_id = u.user_id " +
+                    "WHERE cr.course_code = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, courseCode);
+            ResultSet resultSet = statement.executeQuery();
+
+            System.out.println("Students in Course: " + courseCode);
+            while (resultSet.next()) {
+                System.out.println("Student ID: " + resultSet.getInt("student_id") +
+                        ", Email: " + resultSet.getString("email"));
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 }

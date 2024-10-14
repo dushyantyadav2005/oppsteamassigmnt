@@ -1,28 +1,19 @@
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class Course {
-    String code;
-    String title;
-    String professor;
-    int credits;
-    List<String> prerequisites;
-    String schedule;
-    List<String> registeredStudents;
-
-    public Course(String code, String title, String professor, int credits, List<String> prerequisites, String schedule) {
-        this.code = code;
-        this.title = title;
-        this.professor = professor;
-        this.credits = credits;
-        this.prerequisites = prerequisites;
-        this.schedule = schedule;
-        this.registeredStudents = new ArrayList<>();
-    }
-
-    @Override
-    public String toString() {
-        return "Course Code: " + code + ", Title: " + title + ", Professor: " + professor +
-                ", Credits: " + credits + ", Schedule: " + schedule + ", Prerequisites: " + prerequisites;
+    public static boolean courseExists(String courseCode) {
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            String query = "SELECT * FROM courses WHERE course_code = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, courseCode);
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet.next(); // Returns true if the course exists
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

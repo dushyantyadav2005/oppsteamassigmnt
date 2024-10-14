@@ -1,115 +1,142 @@
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Scanner;
 
-public class Student {
-    String email;
-    String password;
-    int year;
-    List<Course> registeredCourses;
-    List<String> complaints;
+public class Student extends User {
+    private int studentId;
 
-    public Student(String email, String password, int year) {
-        this.email = email;
-        this.password = password;
-        this.year = year;
-        this.registeredCourses = new ArrayList<>();
-        this.complaints = new ArrayList<>();
+    public Student(String email, String password) {
+        super(email, password);
+        this.studentId = fetchStudentId(email); // Fetch student ID based on email
     }
 
-    public boolean login(String email, String password) {
-        return this.email.equals(email) && this.password.equals(password);
+    private int fetchStudentId(String email) {
+        int id = -1;
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            String query = "SELECT student_id FROM students WHERE user_id = (SELECT user_id FROM users WHERE email = ?)";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, email);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                id = resultSet.getInt("student_id");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return id;
     }
 
-    public void viewAvailableCourses(List<Course> courses) {
-        System.out.println("Available Courses:");
-        for (Course course : courses) {
-            System.out.println(course);
+    public void viewAvailableCourses() {
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            String query = "SELECT * FROM courses";
+            PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery();
+
+            System.out.println("Available Courses:");
+            while (resultSet.next()) {
+                System.out.println("Course Code: " + resultSet.getString("course_code") +
+                        ", Course Name: " + resultSet.getString("course_name") +
+                        ", Credits: " + resultSet.getInt("credits"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-    public boolean checkPrerequisites(List<Course> courses, List<String> prerequisites) {
-        for (String prerequisite : prerequisites) {
-            boolean found = false;
-            for (Course course : courses) {
-                if (course.title.equals(prerequisite)) {
-                    found = true;
-                    break;
+    public void registerForCourse() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter Course Code to register: ");
+        String courseCode = scanner.nextLine();
+
+        if (courseExists(courseCode)) {
+            try (Connection connection = DatabaseConnection.getConnection()) {
+                String query = "INSERT INTO course_registration (student_id, course_code) VALUES (?, ?)";
+                PreparedStatement statement = connection.prepareStatement(query);
+                statement.setInt(1, this.studentId);
+                statement.setString(2, courseCode);
+
+                int rowsAffected = statement.executeUpdate();
+                if (rowsAffected > 0) {
+                    System.out.println("Successfully registered for course: " + courseCode);
+                } else {
+                    System.out.println("Failed to register for course.");
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-            if (!found) {
-                return false;
-            }
+        } else {
+            System.out.println("Course does not exist.");
         }
-        return true;
     }
 
-    public void registerCourse(List<Course> courses) {
-        System.out.println("Select a course to register:");
-        for (int i = 0; i < courses.size(); i++) {
-            System.out.println((i + 1) + ". " + courses.get(i).title);
+    private boolean courseExists(String courseCode) {
+        boolean exists = false;
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            String query = "SELECT * FROM courses WHERE course_code = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, courseCode);
+            ResultSet resultSet = statement.executeQuery();
+            exists = resultSet.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        int choice = new Scanner(System.in).nextInt() - 1;
-
-        if (choice < 0 || choice >= courses.size()) {
-            System.out.println("Invalid choice. Registration failed.");
-            return;
-        }
-
-        Course selectedCourse = courses.get(choice);
-        if (checkPrerequisites(registeredCourses, selectedCourse.prerequisites)) {
-            registeredCourses.add(selectedCourse);
-            selectedCourse.registeredStudents.add(this.email);
-            System.out.println("Successfully registered for " + selectedCourse.title);
-        } else {
-            System.out.println("Prerequisites not met for " + selectedCourse.title);
-        }
+        return exists;
     }
 
     public void viewSchedule() {
-        System.out.println("Your Schedule:");
-        for (Course course : registeredCourses) {
-            System.out.println(course.title + " on " + course.schedule);
-        }
-    }
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            String query = "SELECT * FROM course_registration WHERE student_id = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, this.studentId);
+            ResultSet resultSet = statement.executeQuery();
 
-    public void trackAcademicProgress() {
-        System.out.println("Your Academic Progress:");
-        // Placeholder for actual academic progress logic
-        // You may implement grade tracking here
-    }
-
-    public void dropCourse() {
-        System.out.println("Select a course to drop:");
-        for (int i = 0; i < registeredCourses.size(); i++) {
-            System.out.println((i + 1) + ". " + registeredCourses.get(i).title);
-        }
-        int choice = new Scanner(System.in).nextInt() - 1;
-
-        if (choice < 0 || choice >= registeredCourses.size()) {
-            System.out.println("Invalid choice. Drop failed.");
-            return;
-        }
-
-        Course courseToDrop = registeredCourses.get(choice);
-        registeredCourses.remove(courseToDrop);
-        courseToDrop.registeredStudents.remove(this.email);
-        System.out.println("Successfully dropped " + courseToDrop.title);
-    }
-
-    public void submitComplaint(String complaint) {
-        complaints.add(complaint);
-        System.out.println("Complaint submitted successfully.");
-    }
-
-    public void viewComplaints() {
-        System.out.println("Your Complaints:");
-        if (complaints.isEmpty()) {
-            System.out.println("No complaints submitted.");
-        } else {
-            for (String complaint : complaints) {
-                System.out.println(complaint);
+            System.out.println("Your Schedule:");
+            while (resultSet.next()) {
+                System.out.println("Course Code: " + resultSet.getString("course_code"));
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void trackGrades() {
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            String query = "SELECT * FROM grades WHERE student_id = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, this.studentId);
+            ResultSet resultSet = statement.executeQuery();
+
+            System.out.println("Your Grades:");
+            while (resultSet.next()) {
+                System.out.println("Course Code: " + resultSet.getString("course_code") +
+                        ", Grade: " + resultSet.getString("grade"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void submitComplaint() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter your complaint: ");
+        String complaintText = scanner.nextLine();
+
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            String query = "INSERT INTO complaints (student_id, complaint_text) VALUES (?, ?)";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, this.studentId);
+            statement.setString(2, complaintText);
+
+            int rowsAffected = statement.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Complaint submitted successfully.");
+            } else {
+                System.out.println("Failed to submit complaint.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 }
