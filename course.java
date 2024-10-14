@@ -1,28 +1,28 @@
-
 import java.util.ArrayList;
+import java.util.List;
 
-public class course{
-    private int course_code;
-    private String course_title;
-    private String proffessor;
-    private int credits;
-    private ArrayList<Integer>prerequisites;
-    private String timing;
-    public course(int course_code, String course_title, String proffessor, int credits, ArrayList<Integer>prerequisites,String timing)
-    {
-        this.course_code=course_code;
-        this.course_title=course_title;
-        this.proffessor=proffessor;
-        this.credits=credits;
-        this.timing=timing;
-        this.prerequisites=prerequisites;
+public class Course {
+    String code;
+    String title;
+    String professor;
+    int credits;
+    List<String> prerequisites;
+    String schedule;
+    List<String> registeredStudents;
+
+    public Course(String code, String title, String professor, int credits, List<String> prerequisites, String schedule) {
+        this.code = code;
+        this.title = title;
+        this.professor = professor;
+        this.credits = credits;
+        this.prerequisites = prerequisites;
+        this.schedule = schedule;
+        this.registeredStudents = new ArrayList<>();
     }
-    public course()
-    {
-        
-    }
-    public String toString()
-    {
-        return "course code : "+course_code+" couse title : "+course_title+" proffessor : "+proffessor+" credits : "+credits+" timing : "+timing;
+
+    @Override
+    public String toString() {
+        return "Course Code: " + code + ", Title: " + title + ", Professor: " + professor +
+                ", Credits: " + credits + ", Schedule: " + schedule + ", Prerequisites: " + prerequisites;
     }
 }
