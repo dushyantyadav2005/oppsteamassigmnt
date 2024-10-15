@@ -13,13 +13,17 @@ public class maini {
         }
         try {
             Connection connection = DriverManager.getConnection(url, username, password);
-            String query = "INSERT INTO user(name, age, marks) VALUES(?, ?, ?)";
+            String query = "DELETE from user WHERE id=?";
             PreparedStatement preparedStatement = connection.prepareStatement(query);
 
-            preparedStatement.setString(1, "Dus");
-            preparedStatement.setInt(2, 20);
-            preparedStatement.setInt(3, 30);
 
+            preparedStatement.setInt(1, 3);
+//            ResultSet resultSet = preparedStatement.executeQuery();
+//             if(resultSet.next()) {
+//                 {
+//                     System.out.println(resultSet.getInt("marks"));
+//                 }
+// }
             int affectedRows = preparedStatement.executeUpdate(); // Call without the query
 
             if (affectedRows > 0) {

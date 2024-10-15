@@ -52,7 +52,8 @@ public class UniversitySystem {
             System.out.println("3. View Schedule");
             System.out.println("4. Track Grades");
             System.out.println("5. Submit Complaint");
-            System.out.println("6. Logout");
+            System.out.println("6. check status compalin Complaint");
+            System.out.println("7. Logout");
             System.out.print("Choose an option: ");
             int choice = scanner.nextInt();
             scanner.nextLine(); // Consume newline
@@ -74,6 +75,9 @@ public class UniversitySystem {
                     student.submitComplaint();
                     break;
                 case 6:
+                    student.statusCompalin();
+                    break;
+                case 7:
                     System.out.println("Logging out...");
                     return; // Exit the student menu
                 default:
@@ -87,7 +91,8 @@ public class UniversitySystem {
             System.out.println("\nProfessor Menu:");
             System.out.println("1. View Assigned Courses");
             System.out.println("2. View Students in a Course");
-            System.out.println("3. Logout");
+            System.out.println("3. Change professor course detail : ");
+            System.out.println("4. Logout");
             System.out.print("Choose an option: ");
             int choice = scanner.nextInt();
             scanner.nextLine(); // Consume newline
@@ -102,6 +107,8 @@ public class UniversitySystem {
                     professor.viewStudentsInCourse(courseCode);
                     break;
                 case 3:
+                    professor.Courseschange();
+                case 4:
                     System.out.println("Logging out...");
                     return; // Exit the professor menu
                 default:

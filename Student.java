@@ -21,6 +21,10 @@ public class Student extends User {
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
                 id = resultSet.getInt("student_id");
+                System.out.println(id);
+            }else{
+                System.out.println("No student found");
+                System.exit(0);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -126,14 +130,50 @@ public class Student extends User {
         try (Connection connection = DatabaseConnection.getConnection()) {
             String query = "INSERT INTO complaints (student_id, complaint_text) VALUES (?, ?)";
             PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, this.studentId);
+            statement.setInt(1, this.studentId);  // Assuming 'studentId' is defined in your class
             statement.setString(2, complaintText);
 
             int rowsAffected = statement.executeUpdate();
             if (rowsAffected > 0) {
                 System.out.println("Complaint submitted successfully.");
+
+                // Query to retrieve the complaint_id of the inserted complaint
+                String selectSQL = "SELECT complaint_id FROM complaints WHERE complaint_text = ?";
+                PreparedStatement selectPreparedStatement = connection.prepareStatement(selectSQL);
+                selectPreparedStatement.setString(1, complaintText);
+                ResultSet resultSet1 = selectPreparedStatement.executeQuery();
+
+                // Check if the result set has data before accessing it
+                if (resultSet1.next()) {
+                    int id = resultSet1.getInt("complaint_id");
+                    System.out.println("Complaint ID is: " + id);
+                } else {
+                    System.out.println("No complaint found with the given text.");
+                }
             } else {
                 System.out.println("Failed to submit complaint.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void statusCompalin()
+    {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter your complaint id: ");
+        int c_id = scanner.nextInt();
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            String query = "SELECT * FROM complaints WHERE complaint_id = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, c_id);
+            ResultSet resultSet = statement.executeQuery();
+
+
+            if (resultSet.next()) {
+                System.out.println("Complaint Pending.");
+            } else {
+                System.out.println("resolved.");
             }
         } catch (SQLException e) {
             e.printStackTrace();
