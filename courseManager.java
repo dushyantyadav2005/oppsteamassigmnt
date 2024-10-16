@@ -21,11 +21,13 @@ public class courseManager {
         String pre = scanner.nextLine();
         System.out.print("Enter Drop Deadline (YYYY-MM-DD): ");
         String deadlineInput = scanner.nextLine();
+        System.out.print("Enter capacity: ");
+        int c = scanner.nextInt();
 
         LocalDate dropDeadline = LocalDate.parse(deadlineInput, DateTimeFormatter.ISO_LOCAL_DATE);
 
         try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "INSERT INTO courses (course_code, course_name, credits, semester_id, prerequisites, drop_deadline) VALUES (?, ?, ?, ?, ?, ?)";
+            String query = "INSERT INTO courses (course_code, course_name, credits, semester_id, prerequisites, drop_deadline,capacity) VALUES (?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, courseCode);
             statement.setString(2, courseName);
@@ -33,6 +35,7 @@ public class courseManager {
             statement.setInt(4, sem_id);
             statement.setString(5, pre);
             statement.setDate(6, java.sql.Date.valueOf(dropDeadline)); // Set the drop_deadline
+            statement.setInt(7, c); // Set the capacity
 
             int rowsAffected = statement.executeUpdate();
             if (rowsAffected > 0) {

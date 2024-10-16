@@ -4,7 +4,22 @@ public class UniversitySystem {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Welcome to the University Course Registration System!");
-        
+
+        System.out.println("1. Enter the Application");
+        System.out.println("2. Exit the Application");
+        System.out.print("Choose an option: ");
+        int c = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
+        switch (c) {
+            case 1:
+                break;
+            case 2:
+               System.exit(0);
+                break;
+            default:
+                System.out.println("Invalid choice.");
+        }
         while (true) {
             System.out.println("\n1. Login as Student");
             System.out.println("2. Login as Professor");

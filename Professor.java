@@ -122,7 +122,7 @@ public class Professor extends User {
                             break;
                         case 3:
                             System.out.println("Logging out...");
-                            return; // Exit the professor menu
+                            return;
                         default:
                             System.out.println("Invalid choice.");
                     }

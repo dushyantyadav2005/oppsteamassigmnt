@@ -324,16 +324,17 @@ public class Student extends User {
         System.out.print("Enter your complaint id: ");
         int c_id = scanner.nextInt();
         try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM complaints WHERE complaint_id = ?";
+            String query = "SELECT status FROM complaints WHERE complaint_id = ?";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setInt(1, c_id);
             ResultSet resultSet = statement.executeQuery();
 
 
             if (resultSet.next()) {
-                System.out.println("Complaint Pending.");
+                String status = resultSet.getString("status");
+                System.out.println("Complaint"+" Status is: " + status);
             } else {
-                System.out.println("resolved.");
+                System.out.println("No complain found with the given id.");
             }
         } catch (SQLException e) {
             e.printStackTrace();
