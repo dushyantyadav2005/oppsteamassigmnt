@@ -1,6 +1,8 @@
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class courseManager {
@@ -10,22 +12,27 @@ public class courseManager {
         String courseCode = scanner.nextLine();
         System.out.print("Enter Course Name: ");
         String courseName = scanner.nextLine();
-        System.out.print("Enter Semester id: ");
+        System.out.print("Enter Semester ID: ");
         int sem_id = scanner.nextInt();
         System.out.print("Enter Course Credits: ");
         int credits = scanner.nextInt();
-        System.out.print("Enter Course prerequisites: ");
+        scanner.nextLine();
+        System.out.print("Enter Course Prerequisites: ");
         String pre = scanner.nextLine();
+        System.out.print("Enter Drop Deadline (YYYY-MM-DD): ");
+        String deadlineInput = scanner.nextLine();
+
+        LocalDate dropDeadline = LocalDate.parse(deadlineInput, DateTimeFormatter.ISO_LOCAL_DATE);
 
         try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "INSERT INTO courses (course_code, course_name,credits,semester_id,prerequisites) VALUES (?, ?,?,?,?)";
+            String query = "INSERT INTO courses (course_code, course_name, credits, semester_id, prerequisites, drop_deadline) VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, courseCode);
             statement.setString(2, courseName);
             statement.setInt(3, credits);
             statement.setInt(4, sem_id);
             statement.setString(5, pre);
-
+            statement.setDate(6, java.sql.Date.valueOf(dropDeadline)); // Set the drop_deadline
 
             int rowsAffected = statement.executeUpdate();
             if (rowsAffected > 0) {
@@ -39,13 +46,13 @@ public class courseManager {
     }
 
     public void updateCourse(Scanner scanner) {
-        System.out.println("\nOption to change :");
-//        System.out.println("1. course code : ");
-        System.out.println("1. course name : ");
-        System.out.println("2. credits : ");
+        System.out.println("\nOptions to change :");
+        System.out.println("1. Course Name : ");
+        System.out.println("2. Credits : ");
         System.out.println("3. Semester : ");
-        System.out.println("4. prerequisites : ");
-        System.out.println("5. return ");
+        System.out.println("4. Prerequisites : ");
+        System.out.println("5. Drop Deadline : ");
+        System.out.println("6. Return ");
         System.out.print("Choose an option: ");
         int choice = scanner.nextInt();
         scanner.nextLine(); // Consume newline
@@ -120,7 +127,7 @@ public class courseManager {
             case 4:
                 System.out.print("Enter Course Code to update: ");
                 courseCo = scanner.nextLine();
-                System.out.print("Enter prerequisites : ");
+                System.out.print("Enter Prerequisites: ");
                 String pre = scanner.nextLine();
 
                 try (Connection connection = DatabaseConnection.getConnection()) {
@@ -138,33 +145,58 @@ public class courseManager {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
+                break;
             case 5:
+                System.out.print("Enter Course Code to update: ");
+                courseCo = scanner.nextLine();
+                System.out.print("Enter New Drop Deadline (YYYY-MM-DD): ");
+                String deadlineInput = scanner.nextLine();
+
+                LocalDate dropDeadline = LocalDate.parse(deadlineInput, DateTimeFormatter.ISO_LOCAL_DATE);
+
+                try (Connection connection = DatabaseConnection.getConnection()) {
+                    String query = "UPDATE courses SET drop_deadline = ? WHERE course_code = ?";
+                    PreparedStatement statement = connection.prepareStatement(query);
+                    statement.setDate(1, java.sql.Date.valueOf(dropDeadline)); // Set the drop_deadline
+                    statement.setString(2, courseCo);
+
+                    int rowsAffected = statement.executeUpdate();
+                    if (rowsAffected > 0) {
+                        System.out.println("Drop deadline updated successfully.");
+                    } else {
+                        System.out.println("Failed to update drop deadline or course not found.");
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case 6:
                 System.out.println("Logging out...");
-                return; // Exit the student menu
+                return; // Exit the update course menu
             default:
                 System.out.println("Invalid choice.");
         }
-
     }
 
-    public void deleteCourse(Scanner scanner) {
-        System.out.print("Enter Course Code to delete: ");
-        String courseCode = scanner.nextLine();
 
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "DELETE FROM courses WHERE course_code = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, courseCode);
-
-            int rowsAffected = statement.executeUpdate();
-            if (rowsAffected > 0) {
-                System.out.println("Course deleted successfully.");
-            } else {
-                System.out.println("Failed to delete course or course not found.");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
+//    public void deleteCourse(Scanner scanner) {
+//        System.out.print("Enter Course Code to delete: ");
+//        String courseCode = scanner.nextLine();
+//
+//        try (Connection connection = DatabaseConnection.getConnection()) {
+//            String query = "DELETE FROM course_registration WHERE course_code = ?";
+//            PreparedStatement statement = connection.prepareStatement(query);
+//            statement.setString(1, courseCode);
+//
+//            int rowsAffected = statement.executeUpdate();
+//            if (rowsAffected > 0) {
+//                System.out.println("Course deleted successfully.");
+//            } else {
+//                System.out.println("Failed to delete course or course not found.");
+//            }
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
 }

@@ -2,8 +2,21 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Scanner;
+
+class CourseFullException extends Exception {
+    public CourseFullException(String message) {
+        super(message);
+    }
+}
+ class DropDeadlinePassedException extends Exception {
+    public DropDeadlinePassedException(String message) {
+        super(message);
+}
+}
 
 public class Student extends User {
     private int studentId;
@@ -59,29 +72,68 @@ public class Student extends User {
     public void registerForCourse() {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Enter Course Code to register: ");
-        String courseCode = scanner.nextLine().trim(); // Trim input to remove leading/trailing spaces
+        String courseCode = scanner.nextLine().trim();
 
-        if (courseExists(courseCode)) {
-            try (Connection connection = DatabaseConnection.getConnection()) {
-                // Insert into course_registration table
-                String query = "INSERT INTO course_registration (student_id, course_code) VALUES (?, ?)";
-                PreparedStatement statement = connection.prepareStatement(query);
-                statement.setInt(1, this.studentId);
-                statement.setString(2, courseCode);
+        if (courseExists(courseCode)&&!isAlreadyPresent(courseCode)) {
+            Connection connection = null;
+            PreparedStatement checkCapacityStmt = null;
+            ResultSet rs = null;
 
-                int rowsAffected = statement.executeUpdate();
-                if (rowsAffected > 0) {
-                    System.out.println("Successfully registered for course: " + courseCode);
-                } else {
-                    System.out.println("Failed to register for course.");
+            try {
+                connection = DatabaseConnection.getConnection();
+
+                // Check if the course is full
+                String checkCapacityQuery = "SELECT capacity, (SELECT COUNT(*) FROM course_registration WHERE course_code = ?) AS enrolled_students FROM courses WHERE course_code = ?";
+                checkCapacityStmt = connection.prepareStatement(checkCapacityQuery);
+                checkCapacityStmt.setString(1, courseCode);
+                checkCapacityStmt.setString(2, courseCode);
+                rs = checkCapacityStmt.executeQuery();
+
+                if (rs.next()) {
+                    int capacity = rs.getInt("capacity");
+                    int enrolledStudents = rs.getInt("enrolled_students");
+
+                    if (enrolledStudents >= capacity) {
+                        throw new CourseFullException("The course " + courseCode + " is full.");
+                    } else {
+                        // Course has available slots, proceed with registration
+                        System.out.println("Course has available slots. Proceeding with registration...");
+
+                        // Insert into course_registration table
+                        String insertQuery = "INSERT INTO course_registration (student_id, course_code) VALUES (?, ?)";
+                        PreparedStatement registerStmt = connection.prepareStatement(insertQuery);
+                        registerStmt.setInt(1, this.studentId); // Assuming studentId is defined in your class
+                        registerStmt.setString(2, courseCode);
+
+                        int rowsAffected = registerStmt.executeUpdate();
+                        if (rowsAffected > 0) {
+                            System.out.println("Successfully registered for course: " + courseCode);
+                        } else {
+                            System.out.println("Failed to register for course.");
+                        }
+
+                        // Close register statement
+                        registerStmt.close();
+                    }
                 }
+            } catch (CourseFullException e) {
+                System.out.println(e.getMessage());
             } catch (SQLException e) {
                 e.printStackTrace();
+            } finally {
+                try {
+                    if (rs != null) rs.close();
+                    if (checkCapacityStmt != null) checkCapacityStmt.close();
+                    if (connection != null) connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         } else {
             System.out.println("Course does not exist or prerequisites are not met.");
         }
     }
+
 
     private boolean courseExists(String courseCode) {
         boolean exists = false;
@@ -129,16 +181,52 @@ public class Student extends User {
                 }
             }
 
-            // Check if the course is already registered
-            if (isAlreadyPresent(courseCode)) {
-                return false;
-            }
-
             exists = true; // Course exists and prerequisites are met
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return exists;
+    }
+
+    public void dropCourse() {
+        Scanner scanner=new Scanner(System.in);
+        System.out.print("Enter Course Code to drop: ");
+        String courseCode = scanner.nextLine();
+
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            String checkDeadlineQuery = "SELECT drop_deadline FROM courses WHERE course_code = ?";
+            PreparedStatement checkDeadlineStmt = connection.prepareStatement(checkDeadlineQuery);
+            checkDeadlineStmt.setString(1, courseCode);
+            ResultSet rs = checkDeadlineStmt.executeQuery();
+
+            if (rs.next()) {
+                Date dropDeadline = rs.getDate("drop_deadline");
+                LocalDate currentDate = LocalDate.now();
+
+                if (currentDate.isAfter(((java.sql.Date) dropDeadline).toLocalDate())) {
+                    throw new DropDeadlinePassedException("The drop deadline for the course " + courseCode + " has passed.");
+                }
+
+                // Proceed to delete the course
+                String query = "DELETE FROM course_registration WHERE course_code = ? AND student_id = ?";
+                PreparedStatement statement = connection.prepareStatement(query);
+                statement.setString(1, courseCode);
+                statement.setInt(2, studentId);
+
+                int rowsAffected = statement.executeUpdate();
+                if (rowsAffected > 0) {
+                    System.out.println("Course deleted successfully.");
+                } else {
+                    System.out.println("Failed to delete course or course not found.");
+                }
+            } else {
+                System.out.println("Course not found.");
+            }
+        } catch (DropDeadlinePassedException e) {
+            System.out.println(e.getMessage());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean isAlreadyPresent(String courseCode) {
