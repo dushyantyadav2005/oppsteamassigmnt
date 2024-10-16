@@ -9,7 +9,11 @@ public class Professor extends User {
 
     public Professor(String email, String password) {
         super(email, password);
-        this.professorId = fetchProfessorId(email); // Fetch professor ID based on email
+        if(super.login()) {
+            this.professorId = fetchProfessorId(email); // Fetch professor ID based on email
+        }else{
+            System.out.println("No user exist");
+        }
     }
 
     private int fetchProfessorId(String email) {
@@ -70,6 +74,7 @@ public class Professor extends User {
             }
             String[] course = courses.split(",");
             Scanner scanner = new Scanner(System.in);
+            System.out.println("Enter course ID: ");
             String p=scanner.nextLine();
 
             // Print the result
@@ -88,7 +93,7 @@ public class Professor extends User {
                         case 1:
                             String updateSQL = "UPDATE courses SET course_name = ? WHERE course_code = ?";
                             PreparedStatement preparedStatement = connection.prepareStatement(updateSQL);
-                            System.out.println("Enter new username : ");
+                            System.out.println("Enter new course name: : ");
                             String newname=scanner.nextLine();
                             preparedStatement.setString(1, newname);
                             preparedStatement.setString(2, p);
@@ -130,7 +135,7 @@ public class Professor extends User {
 
     public void viewStudentsInCourse(String courseCode) {
         try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "SELECT s.student_id, u.email " +
+            String query = "SELECT s.student_id, u.email, s.contact_details " +
                     "FROM course_registration cr " +
                     "JOIN students s ON cr.student_id = s.student_id " +
                     "JOIN users u ON s.user_id = u.user_id " +
@@ -142,10 +147,12 @@ public class Professor extends User {
             System.out.println("Students in Course: " + courseCode);
             while (resultSet.next()) {
                 System.out.println("Student ID: " + resultSet.getInt("student_id") +
-                        ", Email: " + resultSet.getString("email"));
+                        ", Email: " + resultSet.getString("email") +
+                        ", Contact: " + resultSet.getString("contact_details"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
 }

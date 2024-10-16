@@ -2,6 +2,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Scanner;
 
 public class Student extends User {
@@ -9,7 +10,11 @@ public class Student extends User {
 
     public Student(String email, String password) {
         super(email, password);
-        this.studentId = fetchStudentId(email); // Fetch student ID based on email
+        if(super.login()) {
+            this.studentId = fetchStudentId(email); // Fetch student ID based on email
+        }else{
+            System.out.println("No user exist");
+        }
     }
 
     private int fetchStudentId(String email) {
@@ -34,8 +39,10 @@ public class Student extends User {
 
     public void viewAvailableCourses() {
         try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM courses";
+            // Query to get available courses for the student based on their current semester
+            String query = "SELECT * FROM courses WHERE semester_id = (SELECT current_semester_id FROM students WHERE student_id = ?)";
             PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, studentId);
             ResultSet resultSet = statement.executeQuery();
 
             System.out.println("Available Courses:");
@@ -52,10 +59,11 @@ public class Student extends User {
     public void registerForCourse() {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Enter Course Code to register: ");
-        String courseCode = scanner.nextLine();
+        String courseCode = scanner.nextLine().trim(); // Trim input to remove leading/trailing spaces
 
         if (courseExists(courseCode)) {
             try (Connection connection = DatabaseConnection.getConnection()) {
+                // Insert into course_registration table
                 String query = "INSERT INTO course_registration (student_id, course_code) VALUES (?, ?)";
                 PreparedStatement statement = connection.prepareStatement(query);
                 statement.setInt(1, this.studentId);
@@ -71,18 +79,82 @@ public class Student extends User {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("Course does not exist.");
+            System.out.println("Course does not exist or prerequisites are not met.");
         }
     }
 
     private boolean courseExists(String courseCode) {
         boolean exists = false;
         try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM courses WHERE course_code = ?";
+            // Check for prerequisites of the course
+            String query = "SELECT prerequisites FROM courses WHERE course_code = ?";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, courseCode);
             ResultSet resultSet = statement.executeQuery();
-            exists = resultSet.next();
+
+            String prerequisites = null;
+            if (resultSet.next()) {
+                prerequisites = resultSet.getString("prerequisites");
+            }
+
+            String[] prerequisiteCourses = {};
+            if (prerequisites != null) {
+                prerequisiteCourses = prerequisites.split(",");
+            }
+
+            // Fetch completed courses for the student
+            query = "SELECT course_done FROM students WHERE student_id = ?";
+            PreparedStatement statement2 = connection.prepareStatement(query);
+            statement2.setInt(1, studentId);
+            resultSet = statement2.executeQuery();
+
+            String doneCourses = null;
+            if (resultSet.next()) {
+                doneCourses = resultSet.getString("course_done");
+            }
+
+            HashSet<String> doneCoursesSet = new HashSet<>();
+            if (doneCourses != null) {
+                String[] doneCoursesArray = doneCourses.split(",");
+                for (String co : doneCoursesArray) {
+                    doneCoursesSet.add(co.trim());
+                }
+
+                // Check if all prerequisites are met
+                for (String c : prerequisiteCourses) {
+                    if (!doneCoursesSet.contains(c.trim())) {
+                        System.out.println("Missing prerequisite: " + c);
+                        return false;
+                    }
+                }
+            }
+
+            // Check if the course is already registered
+            if (isAlreadyPresent(courseCode)) {
+                return false;
+            }
+
+            exists = true; // Course exists and prerequisites are met
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return exists;
+    }
+
+    public boolean isAlreadyPresent(String courseCode) {
+        boolean exists = false;
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            // Check if the student is already registered for the course
+            String query = "SELECT registration_id FROM course_registration WHERE course_code = ? AND student_id = ?";
+            PreparedStatement statement3 = connection.prepareStatement(query);
+            statement3.setString(1, courseCode);
+            statement3.setInt(2, studentId);
+            ResultSet resultSet = statement3.executeQuery();
+
+            if (resultSet.next()) {
+                System.out.println("Student is already registered for the course");
+                exists = true;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
