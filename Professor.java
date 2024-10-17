@@ -7,12 +7,18 @@ import java.util.Scanner;
 public class Professor extends User {
     private int professorId;
 
-    public Professor(String email, String password) {
+    public Professor(String email, String password)  throws InvalidLoginException {
         super(email, password);
-        if(super.login()) {
-            this.professorId = fetchProfessorId(email); // Fetch professor ID based on email
-        }else{
-            System.out.println("No user exist");
+        try {
+            if (super.login()) {
+                this.professorId = fetchProfessorId(email); // Fetch professor ID based on email
+            } else {
+                throw new InvalidLoginException("Invalid user not found");
+            }
+        }catch(InvalidLoginException e)
+        {
+            System.out.println("No user found");
+            System.exit(0);
         }
     }
 

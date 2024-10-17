@@ -21,12 +21,17 @@ class CourseFullException extends Exception {
 public class Student extends User {
     private int studentId;
 
-    public Student(String email, String password) {
+    public Student(String email, String password) throws InvalidLoginException  {
         super(email, password);
-        if(super.login()) {
-            this.studentId = fetchStudentId(email); // Fetch student ID based on email
-        }else{
-            System.out.println("No user exist");
+        try {
+            if (super.login()) {
+                this.studentId = fetchStudentId(email); // Fetch student ID based on email
+            } else {
+                throw new InvalidLoginException("Invalid user not found");
+            }
+        }catch(InvalidLoginException e) {
+            System.out.println("invalid user not found");
+            System.exit(0);
         }
     }
 

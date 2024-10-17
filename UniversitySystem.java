@@ -38,23 +38,26 @@ public class UniversitySystem {
             String email = scanner.nextLine();
             System.out.print("Enter Password: ");
             String password = scanner.nextLine();
-
-            switch (choice) {
-                case 1:
-                    Student student = new Student(email, password);
-                    studentMenu(student, scanner);
-                    break;
-                case 2:
-                    Professor professor = new Professor(email, password);
-                    professorMenu(professor, scanner);
-                    break;
-                case 3:
-                    Administrator admin = new Administrator(email, password);
-                    adminMenu(admin, scanner);
-                    break;
-                default:
-                    System.out.println("Invalid choice.");
-            }
+try {
+    switch (choice) {
+        case 1:
+            Student student = new Student(email, password);
+            studentMenu(student, scanner);
+            break;
+        case 2:
+            Professor professor = new Professor(email, password);
+            professorMenu(professor, scanner);
+            break;
+        case 3:
+            Administrator admin = new Administrator(email, password);
+            adminMenu(admin, scanner);
+            break;
+        default:
+            System.out.println("Invalid choice.");
+    }
+}catch(Exception e) {
+    System.out.println(e.getMessage());
+}
         }
         scanner.close(); // Close the scanner to prevent resource leaks
     }

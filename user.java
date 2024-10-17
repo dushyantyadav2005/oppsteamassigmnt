@@ -14,7 +14,7 @@ public abstract class User {
     }
 
     // Login method
-    public boolean login() {
+    public boolean login(){
         try (Connection connection = DatabaseConnection.getConnection()) {
             String query = "SELECT user_id FROM users WHERE email = ? AND password = ?";
             PreparedStatement statement = connection.prepareStatement(query);
@@ -23,15 +23,16 @@ public abstract class User {
             ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.next()) {
-                this.userId = resultSet.getInt("user_id"); // Fetch user ID on successful login
-                return true; // User exists
+                this.userId = resultSet.getInt("user_id");
+                return true;
             }
-            return false; // User does not exist
+            return false;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
+
 
     // Fetch user details from the database
     public void fetchUserDetails() {
