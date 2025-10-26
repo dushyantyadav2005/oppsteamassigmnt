@@ -62,16 +62,14 @@ Java Core, JDBC Database Connectivity, CLI menu interaction.
 
 ## Limitations and Improvements
 Currently:
-- No authentication system
 - Console-only interface
 - Minimal validation
 Future Improvements:
 - GUI (Swing/JavaFX)
 - REST API (Spring Boot)
 - Data Access Object layer
-- ORM (Hibernate)
 - Logging (Log4j)
-- Unit testing (JUnit)
+
 
 ## Author
 Dushyant Yadav  
