@@ -15,6 +15,7 @@ This project is a Java-based University Management System demonstrating Object-O
 Encapsulation (private fields + getters/setters), Abstraction (role-based behaviors), Modularity (dedicated manager classes), Class-level organization for clarity and separation of responsibilities.
 
 ## Architecture Overview
+<img width="1395" height="818" alt="Screenshot 2025-08-21 075353" src="https://github.com/user-attachments/assets/911a93ec-5d2f-418e-948e-d2d0909e2bb6" />
 - Presentation Layer: `UniversitySystem.java` (menu-based user interaction)
 - Business Logic Layer: `Administrator.java`, `Professor.java`, `Student.java`, `CourseManager.java`, `StudentManager.java`
 - Persistence Layer: `DatabaseConnection.java` handles JDBC and database connectivity
