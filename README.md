@@ -1,7 +1,7 @@
 # University Management System (OOP Assignment)
 
 Repository: https://github.com/dushyantyadav2005/oppsteamassigmnt  
-Database Design PDF: https://drive.google.com/file/d/1_OHBfzX4RUisSo3W1iPDPG5KxuPMiDLW/view
+Database Design PDF: (https://drive.google.com/file/d/1QP5pkkm4yuDKJYj7GnzL_i9Nkt7NGKHK/view?usp=drive_link)
 
 This project is a Java-based University Management System demonstrating Object-Oriented Programming concepts, where Administrator, Professor, and Student roles interact with Courses and Enrollments. It includes modular design, layered architecture, and database connectivity with JDBC.
 
@@ -34,7 +34,7 @@ This layered approach simplifies maintenance and scalability.
 ## Database (Referenced in PDF)
 Core tables recommended:
 Students(id, name, email, year), Professors(id, name, department), Courses(id, title, credits), Student_Course(student_id, course_id), Professor_Course(professor_id, course_id). Optional: grades table for evaluation tracking.
-PDF link: https://drive.google.com/file/d/1_OHBfzX4RUisSo3W1iPDPG5KxuPMiDLW/view
+PDF link: https://drive.google.com/file/d/1QP5pkkm4yuDKJYj7GnzL_i9Nkt7NGKHK/view?usp=drive_link
 
 ## How to Run
 1. Clone the project:
